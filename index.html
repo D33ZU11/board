@@ -34,10 +34,11 @@
             border-top: 6px solid var(--primary);
         }
 
+        /* Adjusted grid to ensure it doesn't squash the cards */
         .grid-6 {
             display: grid;
             grid-template-columns: repeat(6, 1fr); 
-            gap: 10px;
+            gap: 12px;
             margin-top: 10px;
         }
 
@@ -49,19 +50,39 @@
             align-items: center;
             justify-content: center;
             background: #fdfdfd;
+            min-width: 0; /* Prevents overflow */
         }
 
         .slot.filled { border-style: solid; border-color: var(--primary); background: white; }
 
         .pec-card {
-            width: 100%; height: 100%; padding: 5px;
-            text-align: center; cursor: pointer;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; 
+            height: 100%; 
+            padding: 4px;
+            text-align: center; 
+            cursor: pointer;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: space-between; /* Pushes label to bottom */
         }
 
-        /* CHANGED: Increased image size for the visual sequence grid */
-        .pec-card img { width: 75%; height: 75%; object-fit: contain; margin-bottom: 2px; }
-        .card-label { font-size: 0.65rem; font-weight: 700; color: #334155; line-height: 1.1; }
+        /* BIG IMAGES: They now fill almost the entire slot */
+        .pec-card img { 
+            width: 90%; 
+            height: 70%; 
+            object-fit: contain; 
+            margin-top: 2px;
+        }
+
+        .card-label { 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            color: #1e293b; 
+            line-height: 1;
+            margin-bottom: 2px;
+            word-break: break-word;
+        }
 
         .btn-send {
             width: 100%;
@@ -108,8 +129,8 @@
 
         .library-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 12px;
         }
 
         .lib-card-wrapper { position: relative; aspect-ratio: 1/1; }
@@ -117,18 +138,18 @@
         .lib-card {
             background: white;
             border-radius: 10px;
-            padding: 8px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
         }
 
-        /* CHANGED: Increased image size for the bottom library library */
-        .lib-card img { width: 50px; height: 50px; object-fit: contain; }
+        /* Library images are also significantly larger now */
+        .lib-card img { width: 80%; height: 70%; object-fit: contain; }
 
         .del-btn {
             position: absolute;
@@ -154,6 +175,7 @@
         }
 
         @media (max-width: 600px) {
+            /* On mobile, we show 3 per row so the cards stay HUGE and visible */
             .grid-6 { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
@@ -162,7 +184,7 @@
 
 <div class="container">
     <div class="routine-section">
-        <h2 style="font-size: 0.9rem; margin: 0;">⏳ Visual Sequence</h2>
+        <h2 style="font-size: 0.9rem; margin: 0; margin-bottom: 10px;">⏳ Visual Sequence</h2>
         <div id="routineGrid" class="grid-6"></div>
         
         <button class="btn-send" onclick="sendToPartner()">🔗 Create WhatsApp Link</button>
@@ -242,7 +264,7 @@
                 <div class="del-btn" onclick="deleteFromLibrary('${index}')">×</div>
                 <div class="lib-card" onclick='addToFirstEmptySlot(${JSON.stringify(item)})'>
                     <img src="${item.img}">
-                    <div class="card-label" style="margin-top:5px">${item.label}</div>
+                    <div class="card-label">${item.label}</div>
                 </div>
             </div>
         `).join('');
@@ -289,7 +311,7 @@
         el.select();
         document.execCommand("copy");
         document.body.removeChild(el);
-        alert("WhatsApp link copied! Just paste and send it to her.");
+        alert("WhatsApp link copied!");
     }
 </script>
 </body>
