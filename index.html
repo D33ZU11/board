@@ -196,49 +196,47 @@
     const PASSCODE = "6969";
     const SLOT_COUNT = 6;
     
-    // ================================================================
-    // === ADD MORE PERMANENT FOLDERS AND IMAGES HERE ===
-    // ================================================================
+    // ===================================================================
+    // === PERMANENT FOLDERS & IMAGES SECTION ===
+    // Add your permanent folders and images here.
+    // These will load every time there is no saved data in localStorage.
+    // ===================================================================
     
-    // Default starting point (these will be loaded if nothing is saved yet)
     const INITIAL_DB = {
-        "Private": [],                    // Keep this empty or add permanent private images here
+        "Private": [],   // Leave empty or add permanent private/locked images here
 
-        // === ADD MORE PERMANENT FOLDERS BELOW THIS LINE ===
+        // === YOUR ORIGINAL FOLDERS (kept exactly as before) ===
         "Time": [
-            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
-            // Add more Time folder images here, e.g.:
-            // { id: "t2", label: 'Now', img: 'https://example.com/clock.png' },
+            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' }
+            // ADD MORE IMAGES TO "Time" FOLDER HERE:
+            // , { id: "t2", label: 'Now', img: 'https://cdn-icons-png.flaticon.com/512/another-image.png' }
         ],
         
         "Social": [
-            { id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' },
-            // Add more Social folder images here
-        ],
-
-        "Food": [
-            { id: "f1", label: 'Eat', img: 'https://cdn-icons-png.flaticon.com/512/2927/2927343.png' },
-            // Add more Food images here
-        ],
-
-        "Feelings": [
-            { id: "feel1", label: 'Happy', img: 'https://cdn-icons-png.flaticon.com/512/190/190411.png' },
-            // Add more Feelings images here
+            { id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' }
+            // ADD MORE IMAGES TO "Social" FOLDER HERE:
         ]
 
-        // Example of how to add a new permanent folder:
-        // "Activities": [
-        //     { id: "a1", label: 'Play', img: 'https://cdn-icons-png.flaticon.com/512/1041/1041728.png' },
-        //     { id: "a2", label: 'Sleep', img: 'https://cdn-icons-png.flaticon.com/512/3094/3094284.png' }
-        // ]
+        // === ADD NEW PERMANENT FOLDERS BELOW THIS LINE ===
+        // Example of how to add a new folder with images:
+        /*
+        "Food": [
+            { id: "f1", label: 'Eat', img: 'https://cdn-icons-png.flaticon.com/512/2927/2927343.png' },
+            { id: "f2", label: 'Drink', img: 'https://cdn-icons-png.flaticon.com/512/3094/3094284.png' }
+        ],
+        "Feelings": [
+            { id: "feel1", label: 'Happy', img: 'https://cdn-icons-png.flaticon.com/512/190/190411.png' }
+        ]
+        */
     };
 
-    // ================================================================
-    // End of permanent folders section
-    // ================================================================
+    // ===================================================================
+    // End of Permanent Folders Section
+    // ===================================================================
 
-    // Version 4 to ensure the Private folder exists first
+    // Load saved data or use the permanent initial database
     let database = JSON.parse(localStorage.getItem('pecs_db_v4')) || INITIAL_DB;
+    
     let state = { 
         routine: Array(SLOT_COUNT).fill(null), 
         currentCategory: Object.keys(database)[0] || "Private",
@@ -283,7 +281,7 @@
             </div>`;
         }).join('');
 
-        // Render Tabs
+        // Render Category Tabs
         const navEl = document.getElementById('categoryNav');
         const categories = Object.keys(database);
         navEl.innerHTML = categories.map(cat => {
@@ -292,7 +290,7 @@
                     onclick="setCategory('\( {cat}')"> \){cat}</button>`;
         }).join('');
 
-        // Render Library
+        // Render Library Grid
         const libEl = document.getElementById('libraryGrid');
         const currentCatLabel = document.getElementById('currentCatLabel');
         
@@ -303,7 +301,7 @@
         }
 
         currentCatLabel.innerText = state.currentCategory;
-        document.getElementById('delFolderBtn').style.display = categories.length > 1 ? "block" : "none"; // Prevent deleting last folder
+        document.getElementById('delFolderBtn').style.display = (categories.length > 1) ? "block" : "none";
 
         let libHtml = database[state.currentCategory].map((item, index) => `
             <div class="lib-card-wrapper">
@@ -383,7 +381,7 @@
     }
     
     function deleteFromLibrary(index) {
-        if(confirm("Delete card?")) { 
+        if (confirm("Delete card?")) { 
             database[state.currentCategory].splice(index, 1); 
             saveDb(); 
             render(); 
