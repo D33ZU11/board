@@ -57,11 +57,7 @@
 
         .slot.filled { border-style: solid; border-color: var(--primary); background: white; }
 
-        /* BLUR EFFECT FOR PRIVATE CARDS */
-        .is-blurred {
-            filter: blur(8px);
-            opacity: 0.6;
-        }
+        .is-blurred { filter: blur(8px); opacity: 0.6; }
 
         .lock-overlay {
             position: absolute;
@@ -200,16 +196,46 @@
     const PASSCODE = "6969";
     const SLOT_COUNT = 6;
     
-    // Default starting point with Private as the first category
+    // ================================================================
+    // === ADD MORE PERMANENT FOLDERS AND IMAGES HERE ===
+    // ================================================================
+    
+    // Default starting point (these will be loaded if nothing is saved yet)
     const INITIAL_DB = {
-        "Private": [],
+        "Private": [],                    // Keep this empty or add permanent private images here
+
+        // === ADD MORE PERMANENT FOLDERS BELOW THIS LINE ===
         "Time": [
-            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' }
+            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
+            // Add more Time folder images here, e.g.:
+            // { id: "t2", label: 'Now', img: 'https://example.com/clock.png' },
         ],
+        
         "Social": [
-            { id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' }
+            { id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' },
+            // Add more Social folder images here
+        ],
+
+        "Food": [
+            { id: "f1", label: 'Eat', img: 'https://cdn-icons-png.flaticon.com/512/2927/2927343.png' },
+            // Add more Food images here
+        ],
+
+        "Feelings": [
+            { id: "feel1", label: 'Happy', img: 'https://cdn-icons-png.flaticon.com/512/190/190411.png' },
+            // Add more Feelings images here
         ]
+
+        // Example of how to add a new permanent folder:
+        // "Activities": [
+        //     { id: "a1", label: 'Play', img: 'https://cdn-icons-png.flaticon.com/512/1041/1041728.png' },
+        //     { id: "a2", label: 'Sleep', img: 'https://cdn-icons-png.flaticon.com/512/3094/3094284.png' }
+        // ]
     };
+
+    // ================================================================
+    // End of permanent folders section
+    // ================================================================
 
     // Version 4 to ensure the Private folder exists first
     let database = JSON.parse(localStorage.getItem('pecs_db_v4')) || INITIAL_DB;
@@ -219,7 +245,9 @@
         unlocked: false 
     };
 
-    function saveDb() { localStorage.setItem('pecs_db_v4', JSON.stringify(database)); }
+    function saveDb() { 
+        localStorage.setItem('pecs_db_v4', JSON.stringify(database)); 
+    }
 
     function isLocked(name) {
         const n = name.toLowerCase();
@@ -243,11 +271,10 @@
         routineEl.innerHTML = state.routine.map((item, i) => {
             if (!item) return `<div class="slot"></div>`;
             
-            // Check if this card came from a private folder
             const isPrivateCard = item.p === true && !state.unlocked;
             
             return `
-            <div class="slot filled" onclick="${isPrivateCard ? 'checkPass()' : `removeFromSlot(${i})`}">
+            <div class="slot filled" onclick="\( {isPrivateCard ? 'checkPass()' : `removeFromSlot( \){i})`}">
                 ${isPrivateCard ? '<div class="lock-overlay">🔒</div>' : ''}
                 <div class="pec-card ${isPrivateCard ? 'is-blurred' : ''}">
                     <img src="${item.img}">
@@ -262,7 +289,7 @@
         navEl.innerHTML = categories.map(cat => {
             const isLockTab = cat.toLowerCase().includes("private") || cat.toLowerCase().includes("adult");
             return `<button class="folder-btn ${state.currentCategory === cat ? 'active' : ''} ${isLockTab ? 'is-locked-tab' : ''}" 
-                    onclick="setCategory('${cat}')">${cat}</button>`;
+                    onclick="setCategory('\( {cat}')"> \){cat}</button>`;
         }).join('');
 
         // Render Library
@@ -276,7 +303,7 @@
         }
 
         currentCatLabel.innerText = state.currentCategory;
-        document.getElementById('delFolderBtn').style.display = categories.length > 0 ? "block" : "none";
+        document.getElementById('delFolderBtn').style.display = categories.length > 1 ? "block" : "none"; // Prevent deleting last folder
 
         let libHtml = database[state.currentCategory].map((item, index) => `
             <div class="lib-card-wrapper">
@@ -314,7 +341,7 @@
         if (confirm(`Delete folder: ${state.currentCategory}?`)) {
             delete database[state.currentCategory];
             const remaining = Object.keys(database);
-            state.currentCategory = remaining.length > 0 ? remaining[0] : "";
+            state.currentCategory = remaining.length > 0 ? remaining[0] : "Private";
             saveDb();
             render();
         }
@@ -324,8 +351,8 @@
         const label = prompt("Card Name:");
         const imgUrl = prompt("Image Link:");
         if (label && imgUrl) {
-            // Flag cards in private folders with p: true
-            const isPrivate = state.currentCategory.toLowerCase().includes("private") || state.currentCategory.toLowerCase().includes("adult");
+            const isPrivate = state.currentCategory.toLowerCase().includes("private") || 
+                              state.currentCategory.toLowerCase().includes("adult");
             database[state.currentCategory].push({ 
                 id: "c_" + Date.now(), 
                 label, 
@@ -339,13 +366,28 @@
 
     function addToFirstEmptySlot(card) {
         const idx = state.routine.findIndex(s => s === null);
-        if (idx !== -1) { state.routine[idx] = card; render(); }
+        if (idx !== -1) { 
+            state.routine[idx] = card; 
+            render(); 
+        }
     }
     
-    function removeFromSlot(index) { state.routine[index] = null; render(); }
-    function clearRoutine() { state.routine = Array(SLOT_COUNT).fill(null); render(); }
+    function removeFromSlot(index) { 
+        state.routine[index] = null; 
+        render(); 
+    }
+    
+    function clearRoutine() { 
+        state.routine = Array(SLOT_COUNT).fill(null); 
+        render(); 
+    }
+    
     function deleteFromLibrary(index) {
-        if(confirm("Delete card?")) { database[state.currentCategory].splice(index, 1); saveDb(); render(); }
+        if(confirm("Delete card?")) { 
+            database[state.currentCategory].splice(index, 1); 
+            saveDb(); 
+            render(); 
+        }
     }
 
     function sendToPartner() {
@@ -353,10 +395,12 @@
         const encoded = btoa(unescape(encodeURIComponent(data)));
         const shareUrl = window.location.href.split('?')[0] + "?data=" + encoded;
         const el = document.createElement("textarea");
-        el.value = shareUrl; document.body.appendChild(el);
-        el.select(); document.execCommand("copy");
+        el.value = shareUrl; 
+        document.body.appendChild(el);
+        el.select(); 
+        document.execCommand("copy");
         document.body.removeChild(el);
-        alert("Link copied!");
+        alert("Link copied to clipboard!");
     }
 
     window.onload = () => {
@@ -365,11 +409,11 @@
         if (sharedData) {
             try {
                 const decoded = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
-                state.routine = decoded.r;
-                database = decoded.db;
+                state.routine = decoded.r || Array(SLOT_COUNT).fill(null);
+                database = decoded.db || INITIAL_DB;
                 saveDb();
                 window.history.replaceState({}, document.title, window.location.pathname);
-            } catch(e) {}
+            } catch(e) { console.error(e); }
         }
         render();
     };
