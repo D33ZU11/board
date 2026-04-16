@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Visual Board - Folder Edition</title>
+    <title>Visual Board - Secure Edition</title>
     <style>
         :root {
             --bg: #f1f5f9;
@@ -12,6 +12,7 @@
             --text: #1e293b;
             --danger: #ef4444;
             --success: #22c55e;
+            --locked: #6366f1;
         }
 
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -62,7 +63,6 @@
         }
 
         .pec-card img { width: 90%; height: 70%; object-fit: contain; }
-
         .card-label { font-size: 0.7rem; font-weight: 800; line-height: 1; margin-bottom: 2px; }
 
         .btn-send {
@@ -72,13 +72,7 @@
             box-shadow: 0 4px 0 #1d4ed8;
         }
 
-        /* NEW FOLDER NAV STYLES */
-        .category-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .category-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
 
         .category-nav {
             display: flex;
@@ -97,9 +91,14 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
+            position: relative;
         }
 
         .folder-btn.active { background: #000; }
+        
+        /* Locked Folder Style */
+        .folder-btn.is-locked { background: var(--locked); }
+        .folder-btn.is-locked::after { content: ' 🔒'; font-size: 0.7rem; }
 
         .add-folder-btn {
             background: var(--success);
@@ -187,28 +186,32 @@
 </div>
 
 <script>
+    const PASSCODE = "6969";
     const SLOT_COUNT = 6;
     const INITIAL_DB = {
         "Time": [
-            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
-            { id: "t2", label: '5 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563395.png' }
+            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' }
         ],
         "Social": [
             { id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' }
         ]
     };
 
-    // We use pecs_db_v2 to force a fresh start with the new buttons
-    let database = JSON.parse(localStorage.getItem('pecs_db_v2')) || INITIAL_DB;
+    let database = JSON.parse(localStorage.getItem('pecs_db_v3')) || INITIAL_DB;
     let state = { 
         routine: Array(SLOT_COUNT).fill(null), 
-        currentCategory: Object.keys(database)[0] || "" 
+        currentCategory: Object.keys(database)[0] || "",
+        unlockedFolders: []
     };
 
-    function saveDb() { localStorage.setItem('pecs_db_v2', JSON.stringify(database)); }
+    function saveDb() { localStorage.setItem('pecs_db_v3', JSON.stringify(database)); }
+
+    function isFolderLocked(name) {
+        const lowerName = name.toLowerCase();
+        return (lowerName.includes("adult") || lowerName.includes("private")) && !state.unlockedFolders.includes(name);
+    }
 
     function render() {
-        // Sequence
         const routineEl = document.getElementById('routineGrid');
         routineEl.innerHTML = state.routine.map((item, i) => {
             if (!item) return `<div class="slot"></div>`;
@@ -220,20 +223,26 @@
             </div>`;
         }).join('');
 
-        // Navigation
         const navEl = document.getElementById('categoryNav');
         const categories = Object.keys(database);
-        navEl.innerHTML = categories.map(cat => `
-            <button class="folder-btn ${state.currentCategory === cat ? 'active' : ''}" 
-                    onclick="setCategory('${cat}')">${cat}</button>
-        `).join('');
+        navEl.innerHTML = categories.map(cat => {
+            const lockedClass = (cat.toLowerCase().includes("adult") || cat.toLowerCase().includes("private")) ? 'is-locked' : '';
+            return `<button class="folder-btn ${state.currentCategory === cat ? 'active' : ''} ${lockedClass}" 
+                    onclick="setCategory('${cat}')">${cat}</button>`;
+        }).join('');
 
-        // Folder Controls
-        document.getElementById('currentCatLabel').innerText = state.currentCategory || "Empty";
+        const libEl = document.getElementById('libraryGrid');
+        const currentCatLabel = document.getElementById('currentCatLabel');
+        
+        if (isFolderLocked(state.currentCategory)) {
+            currentCatLabel.innerText = "Locked Folder";
+            libEl.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 20px;">Folder is locked. Click the category tab again to enter passcode.</div>`;
+            return;
+        }
+
+        currentCatLabel.innerText = state.currentCategory || "Empty";
         document.getElementById('delFolderBtn').style.display = categories.length > 0 ? "block" : "none";
 
-        // Library
-        const libEl = document.getElementById('libraryGrid');
         if (!state.currentCategory || !database[state.currentCategory]) {
             libEl.innerHTML = `<div class="add-custom-btn" onclick="addLinkCard()">+</div>`;
             return;
@@ -253,8 +262,22 @@
         libEl.innerHTML = libHtml;
     }
 
+    function setCategory(cat) {
+        if (isFolderLocked(cat)) {
+            const entry = prompt("Enter Passcode:");
+            if (entry === PASSCODE) {
+                state.unlockedFolders.push(cat);
+            } else {
+                alert("Wrong code.");
+                return;
+            }
+        }
+        state.currentCategory = cat; 
+        render(); 
+    }
+
     function addNewCategory() {
-        const name = prompt("New Folder Name:");
+        const name = prompt("New Folder Name (Use 'Adult' or 'Private' to lock it):");
         if (name && name.trim() !== "") {
             database[name] = [];
             state.currentCategory = name;
@@ -272,8 +295,6 @@
             render();
         }
     }
-
-    function setCategory(cat) { state.currentCategory = cat; render(); }
     
     function deleteFromLibrary(index) {
         if(confirm("Delete this card?")) {
@@ -308,7 +329,7 @@
         el.value = shareUrl; document.body.appendChild(el);
         el.select(); document.execCommand("copy");
         document.body.removeChild(el);
-        alert("WhatsApp link copied!");
+        alert("Link copied!");
     }
 
     window.onload = () => {
