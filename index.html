@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Visual Board 24/7</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --primary: #2563eb;
+            --folder: #475569;
+            --text: #0f172a;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Top Section: The Active Routine */
+        .routine-card {
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            border-top: 5px solid var(--primary);
+        }
+
+        .grid-6 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .slot {
+            aspect-ratio: 1 / 1;
+            border: 2px dashed #e2e8f0;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fdfdfd;
+        }
+
+        .slot.filled { border: 2px solid var(--primary); background: #fff; }
+
+        .pec-card {
+            width: 100%; height: 100%; padding: 4px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .pec-card img { width: 45px; height: 45px; object-fit: contain; }
+        .card-label { font-size: 0.75rem; font-weight: 800; color: #1e293b; margin-top: 4px; line-height: 1.1; }
+
+        /* Buttons */
+        .main-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1e40af;
+        }
+
+        .main-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #1e40af; }
+
+        /* Navigation */
+        .nav-scroller {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            scrollbar-width: none;
+        }
+
+        .folder {
+            background: var(--folder);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .folder.active { background: #000; }
+
+        /* Library */
+        .bank {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 10px;
+        }
+
+        .lib-wrapper { position: relative; aspect-ratio: 1/1; }
+        .lib-item {
+            background: white;
+            border-radius: 12px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+        }
+
+        .x-btn {
+            position: absolute;
+            top: -5px; right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 24px; height: 24px;
+            border: 2px solid white;
+            font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 5;
+        }
+
+        .add-btn {
+            background: #cbd5e1;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: #475569; border: 2px dashed #94a3b8;
+        }
+
+        @media (min-width: 500px) { .grid-6 { grid-template-columns: repeat(6, 1fr); } }
+    </style>
+</head>
+<body>
+
+<div class="routine-card">
+    <div id="routineGrid" class="grid-6"></div>
+    <button class="main-btn" onclick="shareToWhatsApp()">📲 Share to WhatsApp</button>
+    <button onclick="resetBoard()" style="background:none; border:none; color:gray; text-decoration:underline; font-size:0.75rem; margin-top:12px; width:100%;">Clear All Slots</button>
+</div>
+
+<div id="nav" class="nav-scroller"></div>
+
+<div id="library" class="bank"></div>
+
+<script>
+    const MAX = 6;
+    const DEFAULTS = {
+        "Time": [
+            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
+            { id: "t2", label: '5 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563395.png' },
+            { id: "t3", label: '35 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563404.png' },
+            { id: "t4", label: 'Leave Now', img: 'https://cdn-icons-png.flaticon.com/512/10432/10432135.png' }
+        ],
+        "Social": [
+            { id: "s1", label: 'I Love You', img: 'https://cdn-icons-png.flaticon.com/512/833/833472.png' },
+            { id: "s2", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' },
+            { id: "s3", label: 'Yes', img: 'https://cdn-icons-png.flaticon.com/512/5290/5290058.png' }
+        ],
+        "Self Care": [
+            { id: "c1", label: 'Toilet', img: 'https://cdn-icons-png.flaticon.com/512/3014/3014814.png' },
+            { id: "c2", label: 'Wash Hands', img: 'https://cdn-icons-png.flaticon.com/512/2550/2550341.png' }
+        ],
+        "Food": [
+            { id: "f1", label: 'Breakfast', img: 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png' },
+            { id: "f2", label: 'Drink', img: 'https://cdn-icons-png.flaticon.com/512/3100/3100555.png' }
+        ]
+    };
+
+    let db = JSON.parse(localStorage.getItem('pecs_v247')) || DEFAULTS;
+    let routine = Array(MAX).fill(null);
+    let cat = "Time";
+
+    window.onload = () => {
+        const params = new URLSearchParams(window.location.search);
+        const data = params.get('v');
+        if (data) {
+            try {
+                const decoded = JSON.parse(decodeURIComponent(escape(atob(data))));
+                routine = decoded.r;
+                db = decoded.db;
+                localStorage.setItem('pecs_v247', JSON.stringify(db));
+                window.history.replaceState({}, '', window.location.pathname);
+            } catch(e) {}
+        }
+        render();
+    };
+
+    function render() {
+        document.getElementById('routineGrid').innerHTML = routine.map((item, i) => `
+            <div class="slot ${item ? 'filled' : ''}" onclick="remove(${i})">
+                ${item ? `<div class="pec-card"><img src="${item.img}"><div class="card-label">${item.label}</div></div>` : ''}
+            </div>
+        `).join('');
+
+        document.getElementById('nav').innerHTML = Object.keys(db).map(c => `
+            <button class="folder ${cat === c ? 'active' : ''}" onclick="setCat('${c}')">${c}</button>
+        `).join('');
+
+        let libHtml = db[cat].map((item, idx) => `
+            <div class="lib-wrapper">
+                <div class="x-btn" onclick="del('${idx}')">×</div>
+                <div class="lib-item" onclick='add(${JSON.stringify(item)})'>
+                    <img src="${item.img}">
+                    <div class="card-label">${item.label}</div>
+                </div>
+            </div>
+        `).join('');
+        libHtml += `<div class="lib-wrapper add-btn" onclick="addNew()">+</div>`;
+        document.getElementById('library').innerHTML = libHtml;
+    }
+
+    function setCat(c) { cat = c; render(); }
+    function add(item) { 
+        let idx = routine.indexOf(null);
+        if (idx !== -1) { routine[idx] = item; render(); }
+    }
+    function remove(i) { routine[i] = null; render(); }
+    function resetBoard() { routine = Array(MAX).fill(null); render(); }
+    function del(idx) {
+        if(confirm("Delete card?")) { db[cat].splice(idx, 1); save(); render(); }
+    }
+    function addNew() {
+        const label = prompt("Label:");
+        const img = prompt("Image URL:");
+        if(label && img) { db[cat].push({id: Date.now(), label, img}); save(); render(); }
+    }
+    function save() { localStorage.setItem('pecs_v247', JSON.stringify(db)); }
+
+    function shareToWhatsApp() {
+        const data = btoa(unescape(encodeURIComponent(JSON.stringify({ r: routine, db: db }))));
+        const url = window.location.href.split('?')[0] + "?v=" + data;
+        const el = document.createElement("textarea");
+        el.value = url; document.body.appendChild(el); el.select();
+        document.execCommand("copy"); document.body.removeChild(el);
+        alert("Link Copied! Paste into WhatsApp.");
+    }
+</script>
+</body>
+</html>
