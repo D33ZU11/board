@@ -11,6 +11,7 @@
             --folder: #64748b;
             --text: #1e293b;
             --danger: #ef4444;
+            --success: #22c55e;
         }
 
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -34,7 +35,6 @@
             border-top: 6px solid var(--primary);
         }
 
-        /* Adjusted grid to ensure it doesn't squash the cards */
         .grid-6 {
             display: grid;
             grid-template-columns: repeat(6, 1fr); 
@@ -50,7 +50,7 @@
             align-items: center;
             justify-content: center;
             background: #fdfdfd;
-            min-width: 0; /* Prevents overflow */
+            min-width: 0;
         }
 
         .slot.filled { border-style: solid; border-color: var(--primary); background: white; }
@@ -64,10 +64,9 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: space-between; /* Pushes label to bottom */
+            justify-content: space-between;
         }
 
-        /* BIG IMAGES: They now fill almost the entire slot */
         .pec-card img { 
             width: 90%; 
             height: 70%; 
@@ -100,12 +99,20 @@
 
         .btn-send:active { transform: translateY(2px); box-shadow: 0 2px 0 #1d4ed8; }
 
+        /* Category Navigation Styles */
+        .category-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
         .category-nav {
             display: flex;
             gap: 8px;
             overflow-x: auto;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            padding-bottom: 5px;
+            flex-grow: 1;
         }
 
         .folder-btn {
@@ -121,10 +128,30 @@
 
         .folder-btn.active { background: #000; }
 
+        .add-folder-btn {
+            background: var(--success);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
         .library-section {
             background: #e2e8f0;
             padding: 15px;
             border-radius: 20px;
+        }
+
+        .library-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
         .library-grid {
@@ -148,7 +175,6 @@
             align-items: center;
         }
 
-        /* Library images are also significantly larger now */
         .lib-card img { width: 80%; height: 70%; object-fit: contain; }
 
         .del-btn {
@@ -164,6 +190,16 @@
             cursor: pointer; z-index: 10;
         }
 
+        .btn-del-folder {
+            background: none;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
         .add-custom-btn {
             background: #cbd5e1;
             color: #475569;
@@ -175,7 +211,6 @@
         }
 
         @media (max-width: 600px) {
-            /* On mobile, we show 3 per row so the cards stay HUGE and visible */
             .grid-6 { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
@@ -191,9 +226,16 @@
         <button onclick="clearRoutine()" style="background:none; border:none; color:gray; text-decoration:underline; font-size:0.7rem; margin-top:10px; width:100%;">Clear All</button>
     </div>
 
-    <div id="categoryNav" class="category-nav"></div>
+    <div class="category-container">
+        <div id="categoryNav" class="category-nav"></div>
+        <button class="add-folder-btn" onclick="addNewCategory()">+</button>
+    </div>
 
     <div class="library-section">
+        <div class="library-header">
+            <span id="currentCatLabel" style="font-weight: bold; font-size: 0.8rem; color: #475569;">Category</span>
+            <button id="delFolderBtn" class="btn-del-folder" onclick="deleteCurrentCategory()">Delete Folder</button>
+        </div>
         <div id="libraryGrid" class="library-grid"></div>
     </div>
 </div>
@@ -203,27 +245,19 @@
     const INITIAL_DB = {
         "Time": [
             { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
-            { id: "t2", label: '5 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563395.png' },
-            { id: "t3", label: '35 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563404.png' },
-            { id: "t4", label: 'Leave Now', img: 'https://cdn-icons-png.flaticon.com/512/10432/10432135.png' }
+            { id: "t2", label: '5 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563395.png' }
         ],
         "Social": [
-            { id: "s1", label: 'I Love You', img: 'https://cdn-icons-png.flaticon.com/512/833/833472.png' },
-            { id: "s2", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' },
-            { id: "s3", label: 'Yes', img: 'https://cdn-icons-png.flaticon.com/512/5290/5290058.png' }
-        ],
-        "Self Care": [
-            { id: "c1", label: 'Toilet', img: 'https://cdn-icons-png.flaticon.com/512/3014/3014814.png' },
-            { id: "c2", label: 'Wash Hands', img: 'https://cdn-icons-png.flaticon.com/512/2550/2550341.png' }
-        ],
-        "Food": [
-            { id: "f1", label: 'Breakfast', img: 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png' },
-            { id: "f2", label: 'Drink', img: 'https://cdn-icons-png.flaticon.com/512/3100/3100555.png' }
+            { id: "s1", label: 'I Love You', img: 'https://cdn-icons-png.flaticon.com/512/833/833472.png' }
         ]
     };
 
     let database = JSON.parse(localStorage.getItem('pecs_db_final')) || INITIAL_DB;
-    let state = { routine: Array(SLOT_COUNT).fill(null), currentCategory: "Time" };
+    // Set initial category to the first one available in the database
+    let state = { 
+        routine: Array(SLOT_COUNT).fill(null), 
+        currentCategory: Object.keys(database)[0] || "" 
+    };
 
     window.onload = () => {
         const params = new URLSearchParams(window.location.search);
@@ -233,14 +267,19 @@
                 const decoded = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
                 state.routine = decoded.r;
                 database = decoded.db;
-                localStorage.setItem('pecs_db_final', JSON.stringify(database));
+                saveDb();
                 window.history.replaceState({}, document.title, window.location.pathname);
             } catch(e) { console.error("Link load error"); }
         }
         render();
     };
 
+    function saveDb() {
+        localStorage.setItem('pecs_db_final', JSON.stringify(database));
+    }
+
     function render() {
+        // Render Sequence
         const routineEl = document.getElementById('routineGrid');
         routineEl.innerHTML = state.routine.map((item, i) => {
             if (!item) return `<div class="slot"></div>`;
@@ -252,16 +291,29 @@
             </div>`;
         }).join('');
 
+        // Render Category Tabs
         const navEl = document.getElementById('categoryNav');
-        navEl.innerHTML = Object.keys(database).map(cat => `
+        const categories = Object.keys(database);
+        navEl.innerHTML = categories.map(cat => `
             <button class="folder-btn ${state.currentCategory === cat ? 'active' : ''}" 
                     onclick="setCategory('${cat}')">${cat}</button>
         `).join('');
 
+        // Update Labels
+        document.getElementById('currentCatLabel').innerText = state.currentCategory || "No Categories";
+        const delBtn = document.getElementById('delFolderBtn');
+        delBtn.style.display = categories.length > 0 ? "block" : "none";
+
+        // Render Library Cards
         const libEl = document.getElementById('libraryGrid');
+        if (!state.currentCategory || !database[state.currentCategory]) {
+            libEl.innerHTML = "";
+            return;
+        }
+
         let libHtml = database[state.currentCategory].map((item, index) => `
             <div class="lib-card-wrapper">
-                <div class="del-btn" onclick="deleteFromLibrary('${index}')">×</div>
+                <div class="del-btn" onclick="deleteFromLibrary(${index})">×</div>
                 <div class="lib-card" onclick='addToFirstEmptySlot(${JSON.stringify(item)})'>
                     <img src="${item.img}">
                     <div class="card-label">${item.label}</div>
@@ -273,12 +325,38 @@
         libEl.innerHTML = libHtml;
     }
 
+    // --- Category Management Functions ---
+
+    function addNewCategory() {
+        const name = prompt("Enter new folder name:");
+        if (name && name.trim() !== "") {
+            if (database[name]) {
+                alert("Folder already exists!");
+            } else {
+                database[name] = []; // Create empty array for new folder
+                state.currentCategory = name;
+                saveDb();
+                render();
+            }
+        }
+    }
+
+    function deleteCurrentCategory() {
+        if (confirm(`Delete the entire folder "${state.currentCategory}" and all its cards?`)) {
+            delete database[state.currentCategory];
+            const remaining = Object.keys(database);
+            state.currentCategory = remaining.length > 0 ? remaining[0] : "";
+            saveDb();
+            render();
+        }
+    }
+
     function setCategory(cat) { state.currentCategory = cat; render(); }
     
     function deleteFromLibrary(index) {
         if(confirm("Delete this card?")) {
             database[state.currentCategory].splice(index, 1);
-            localStorage.setItem('pecs_db_final', JSON.stringify(database));
+            saveDb();
             render();
         }
     }
@@ -288,7 +366,7 @@
         const imgUrl = prompt("Paste Image Link:");
         if (label && imgUrl) {
             database[state.currentCategory].push({ id: "cust_" + Date.now(), label, img: imgUrl });
-            localStorage.setItem('pecs_db_final', JSON.stringify(database));
+            saveDb();
             render();
         }
     }
