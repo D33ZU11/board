@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Visual Board - Secure Edition</title>
+    <title>Visual Board - Private Edition</title>
     <style>
         :root {
             --bg: #f1f5f9;
@@ -51,9 +51,23 @@
             align-items: center;
             justify-content: center;
             background: #fdfdfd;
+            overflow: hidden;
+            position: relative;
         }
 
         .slot.filled { border-style: solid; border-color: var(--primary); background: white; }
+
+        /* BLUR EFFECT FOR PRIVATE CARDS */
+        .is-blurred {
+            filter: blur(8px);
+            opacity: 0.6;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            font-size: 1.2rem;
+            z-index: 5;
+        }
 
         .pec-card {
             width: 100%; height: 100%; padding: 4px;
@@ -91,14 +105,11 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
-            position: relative;
         }
 
         .folder-btn.active { background: #000; }
-        
-        /* Locked Folder Style */
-        .folder-btn.is-locked { background: var(--locked); }
-        .folder-btn.is-locked::after { content: ' 🔒'; font-size: 0.7rem; }
+        .folder-btn.is-locked-tab { background: var(--locked); }
+        .folder-btn.is-locked-tab::after { content: ' 🔒'; font-size: 0.7rem; }
 
         .add-folder-btn {
             background: var(--success);
@@ -188,7 +199,10 @@
 <script>
     const PASSCODE = "6969";
     const SLOT_COUNT = 6;
+    
+    // Default starting point with Private as the first category
     const INITIAL_DB = {
+        "Private": [],
         "Time": [
             { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' }
         ],
@@ -197,56 +211,72 @@
         ]
     };
 
-    let database = JSON.parse(localStorage.getItem('pecs_db_v3')) || INITIAL_DB;
+    // Version 4 to ensure the Private folder exists first
+    let database = JSON.parse(localStorage.getItem('pecs_db_v4')) || INITIAL_DB;
     let state = { 
         routine: Array(SLOT_COUNT).fill(null), 
-        currentCategory: Object.keys(database)[0] || "",
-        unlockedFolders: []
+        currentCategory: Object.keys(database)[0] || "Private",
+        unlocked: false 
     };
 
-    function saveDb() { localStorage.setItem('pecs_db_v3', JSON.stringify(database)); }
+    function saveDb() { localStorage.setItem('pecs_db_v4', JSON.stringify(database)); }
 
-    function isFolderLocked(name) {
-        const lowerName = name.toLowerCase();
-        return (lowerName.includes("adult") || lowerName.includes("private")) && !state.unlockedFolders.includes(name);
+    function isLocked(name) {
+        const n = name.toLowerCase();
+        return (n.includes("private") || n.includes("adult")) && !state.unlocked;
+    }
+
+    function checkPass() {
+        const entry = prompt("Enter Passcode:");
+        if (entry === PASSCODE) {
+            state.unlocked = true;
+            render();
+            return true;
+        }
+        alert("Incorrect.");
+        return false;
     }
 
     function render() {
+        // Render Routine Grid
         const routineEl = document.getElementById('routineGrid');
         routineEl.innerHTML = state.routine.map((item, i) => {
             if (!item) return `<div class="slot"></div>`;
-            return `<div class="slot filled" onclick="removeFromSlot(${i})">
-                <div class="pec-card">
+            
+            // Check if this card came from a private folder
+            const isPrivateCard = item.p === true && !state.unlocked;
+            
+            return `
+            <div class="slot filled" onclick="${isPrivateCard ? 'checkPass()' : `removeFromSlot(${i})`}">
+                ${isPrivateCard ? '<div class="lock-overlay">🔒</div>' : ''}
+                <div class="pec-card ${isPrivateCard ? 'is-blurred' : ''}">
                     <img src="${item.img}">
                     <div class="card-label">${item.label}</div>
                 </div>
             </div>`;
         }).join('');
 
+        // Render Tabs
         const navEl = document.getElementById('categoryNav');
         const categories = Object.keys(database);
         navEl.innerHTML = categories.map(cat => {
-            const lockedClass = (cat.toLowerCase().includes("adult") || cat.toLowerCase().includes("private")) ? 'is-locked' : '';
-            return `<button class="folder-btn ${state.currentCategory === cat ? 'active' : ''} ${lockedClass}" 
+            const isLockTab = cat.toLowerCase().includes("private") || cat.toLowerCase().includes("adult");
+            return `<button class="folder-btn ${state.currentCategory === cat ? 'active' : ''} ${isLockTab ? 'is-locked-tab' : ''}" 
                     onclick="setCategory('${cat}')">${cat}</button>`;
         }).join('');
 
+        // Render Library
         const libEl = document.getElementById('libraryGrid');
         const currentCatLabel = document.getElementById('currentCatLabel');
         
-        if (isFolderLocked(state.currentCategory)) {
+        if (isLocked(state.currentCategory)) {
             currentCatLabel.innerText = "Locked Folder";
-            libEl.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 20px;">Folder is locked. Click the category tab again to enter passcode.</div>`;
+            libEl.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; cursor:pointer;" onclick="checkPass()">🔒 Tap to unlock folder</div>`;
             return;
         }
 
-        currentCatLabel.innerText = state.currentCategory || "Empty";
+        currentCatLabel.innerText = state.currentCategory;
         document.getElementById('delFolderBtn').style.display = categories.length > 0 ? "block" : "none";
-
-        if (!state.currentCategory || !database[state.currentCategory]) {
-            libEl.innerHTML = `<div class="add-custom-btn" onclick="addLinkCard()">+</div>`;
-            return;
-        }
 
         let libHtml = database[state.currentCategory].map((item, index) => `
             <div class="lib-card-wrapper">
@@ -263,21 +293,15 @@
     }
 
     function setCategory(cat) {
-        if (isFolderLocked(cat)) {
-            const entry = prompt("Enter Passcode:");
-            if (entry === PASSCODE) {
-                state.unlockedFolders.push(cat);
-            } else {
-                alert("Wrong code.");
-                return;
-            }
+        if (isLocked(cat)) {
+            if (!checkPass()) return;
         }
         state.currentCategory = cat; 
         render(); 
     }
 
     function addNewCategory() {
-        const name = prompt("New Folder Name (Use 'Adult' or 'Private' to lock it):");
+        const name = prompt("Folder Name (Use 'Private' or 'Adult' to lock):");
         if (name && name.trim() !== "") {
             database[name] = [];
             state.currentCategory = name;
@@ -287,18 +311,10 @@
     }
 
     function deleteCurrentCategory() {
-        if (confirm(`Delete entire folder: ${state.currentCategory}?`)) {
+        if (confirm(`Delete folder: ${state.currentCategory}?`)) {
             delete database[state.currentCategory];
             const remaining = Object.keys(database);
             state.currentCategory = remaining.length > 0 ? remaining[0] : "";
-            saveDb();
-            render();
-        }
-    }
-    
-    function deleteFromLibrary(index) {
-        if(confirm("Delete this card?")) {
-            database[state.currentCategory].splice(index, 1);
             saveDb();
             render();
         }
@@ -308,7 +324,14 @@
         const label = prompt("Card Name:");
         const imgUrl = prompt("Image Link:");
         if (label && imgUrl) {
-            database[state.currentCategory].push({ id: "cust_" + Date.now(), label, img: imgUrl });
+            // Flag cards in private folders with p: true
+            const isPrivate = state.currentCategory.toLowerCase().includes("private") || state.currentCategory.toLowerCase().includes("adult");
+            database[state.currentCategory].push({ 
+                id: "c_" + Date.now(), 
+                label, 
+                img: imgUrl,
+                p: isPrivate 
+            });
             saveDb();
             render();
         }
@@ -318,8 +341,12 @@
         const idx = state.routine.findIndex(s => s === null);
         if (idx !== -1) { state.routine[idx] = card; render(); }
     }
+    
     function removeFromSlot(index) { state.routine[index] = null; render(); }
     function clearRoutine() { state.routine = Array(SLOT_COUNT).fill(null); render(); }
+    function deleteFromLibrary(index) {
+        if(confirm("Delete card?")) { database[state.currentCategory].splice(index, 1); saveDb(); render(); }
+    }
 
     function sendToPartner() {
         const data = JSON.stringify({ r: state.routine, db: database });
