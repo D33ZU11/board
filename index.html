@@ -59,10 +59,10 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        .pec-card img { width: 35px; height: 35px; object-fit: contain; margin-bottom: 4px; }
-        .card-label { font-size: 0.6rem; font-weight: 700; color: #334155; line-height: 1.1; }
+        /* CHANGED: Increased image size for the visual sequence grid */
+        .pec-card img { width: 75%; height: 75%; object-fit: contain; margin-bottom: 2px; }
+        .card-label { font-size: 0.65rem; font-weight: 700; color: #334155; line-height: 1.1; }
 
-        /* Updated Buttons */
         .btn-send {
             width: 100%;
             background: var(--primary);
@@ -127,7 +127,8 @@
             align-items: center;
         }
 
-        .lib-card img { width: 30px; height: 30px; object-fit: contain; }
+        /* CHANGED: Increased image size for the bottom library library */
+        .lib-card img { width: 50px; height: 50px; object-fit: contain; }
 
         .del-btn {
             position: absolute;
@@ -202,7 +203,6 @@
     let database = JSON.parse(localStorage.getItem('pecs_db_final')) || INITIAL_DB;
     let state = { routine: Array(SLOT_COUNT).fill(null), currentCategory: "Time" };
 
-    // AUTO-LOAD FROM LINK
     window.onload = () => {
         const params = new URLSearchParams(window.location.search);
         const sharedData = params.get('data');
@@ -212,7 +212,6 @@
                 state.routine = decoded.r;
                 database = decoded.db;
                 localStorage.setItem('pecs_db_final', JSON.stringify(database));
-                // Clean the URL so refreshing doesn't overwrite
                 window.history.replaceState({}, document.title, window.location.pathname);
             } catch(e) { console.error("Link load error"); }
         }
