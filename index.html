@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Visual Board - Secure Share</title>
+    <title>Visual Board - Private Edition</title>
     <style>
         :root {
             --bg: #f1f5f9;
@@ -57,17 +57,16 @@
 
         .slot.filled { border-style: solid; border-color: var(--primary); background: white; }
 
-        /* HEAVIER BLUR */
+        /* BLUR EFFECT FOR PRIVATE CARDS */
         .is-blurred {
-            filter: blur(15px);
-            opacity: 0.3;
+            filter: blur(8px);
+            opacity: 0.6;
         }
 
         .lock-overlay {
             position: absolute;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             z-index: 5;
-            color: var(--locked);
         }
 
         .pec-card {
@@ -201,32 +200,34 @@
     const PASSCODE = "6969";
     const SLOT_COUNT = 6;
     
+    // Default starting point with Private as the first category
     const INITIAL_DB = {
         "Private": [],
         "Time": [
             { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' }
+        ],
+        "Social": [
+            { id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' }
         ]
     };
 
-    // Version 5
-    let database = JSON.parse(localStorage.getItem('pecs_db_v5')) || INITIAL_DB;
+    // Version 4 to ensure the Private folder exists first
+    let database = JSON.parse(localStorage.getItem('pecs_db_v4')) || INITIAL_DB;
     let state = { 
         routine: Array(SLOT_COUNT).fill(null), 
-        currentCategory: "Time",
+        currentCategory: Object.keys(database)[0] || "Private",
         unlocked: false 
     };
 
-    function saveDb() { localStorage.setItem('pecs_db_v5', JSON.stringify(database)); }
+    function saveDb() { localStorage.setItem('pecs_db_v4', JSON.stringify(database)); }
 
     function isLocked(name) {
-        if (!name) return false;
         const n = name.toLowerCase();
         return (n.includes("private") || n.includes("adult")) && !state.unlocked;
     }
 
     function checkPass() {
-        if (state.unlocked) return true;
-        const entry = prompt("Enter Passcode to reveal private items:");
+        const entry = prompt("Enter Passcode:");
         if (entry === PASSCODE) {
             state.unlocked = true;
             render();
@@ -237,24 +238,25 @@
     }
 
     function render() {
+        // Render Routine Grid
         const routineEl = document.getElementById('routineGrid');
         routineEl.innerHTML = state.routine.map((item, i) => {
             if (!item) return `<div class="slot"></div>`;
             
-            // Check if card is marked private AND state is locked
-            const cardIsPrivate = item.p === true;
-            const needsBlur = cardIsPrivate && !state.unlocked;
+            // Check if this card came from a private folder
+            const isPrivateCard = item.p === true && !state.unlocked;
             
             return `
-            <div class="slot filled" onclick="${needsBlur ? 'checkPass()' : `removeFromSlot(${i})`}">
-                ${needsBlur ? '<div class="lock-overlay">🔒</div>' : ''}
-                <div class="pec-card ${needsBlur ? 'is-blurred' : ''}">
+            <div class="slot filled" onclick="${isPrivateCard ? 'checkPass()' : `removeFromSlot(${i})`}">
+                ${isPrivateCard ? '<div class="lock-overlay">🔒</div>' : ''}
+                <div class="pec-card ${isPrivateCard ? 'is-blurred' : ''}">
                     <img src="${item.img}">
                     <div class="card-label">${item.label}</div>
                 </div>
             </div>`;
         }).join('');
 
+        // Render Tabs
         const navEl = document.getElementById('categoryNav');
         const categories = Object.keys(database);
         navEl.innerHTML = categories.map(cat => {
@@ -263,6 +265,7 @@
                     onclick="setCategory('${cat}')">${cat}</button>`;
         }).join('');
 
+        // Render Library
         const libEl = document.getElementById('libraryGrid');
         const currentCatLabel = document.getElementById('currentCatLabel');
         
@@ -311,7 +314,7 @@
         if (confirm(`Delete folder: ${state.currentCategory}?`)) {
             delete database[state.currentCategory];
             const remaining = Object.keys(database);
-            state.currentCategory = remaining.length > 0 ? remaining[0] : "Time";
+            state.currentCategory = remaining.length > 0 ? remaining[0] : "";
             saveDb();
             render();
         }
@@ -321,6 +324,7 @@
         const label = prompt("Card Name:");
         const imgUrl = prompt("Image Link:");
         if (label && imgUrl) {
+            // Flag cards in private folders with p: true
             const isPrivate = state.currentCategory.toLowerCase().includes("private") || state.currentCategory.toLowerCase().includes("adult");
             database[state.currentCategory].push({ 
                 id: "c_" + Date.now(), 
@@ -364,15 +368,8 @@
                 state.routine = decoded.r;
                 database = decoded.db;
                 saveDb();
-                
-                // MANDATORY CHECK: If the shared sequence contains private items, ask immediately
-                const hasPrivate = state.routine.some(item => item && item.p === true);
-                if (hasPrivate) {
-                    checkPass();
-                }
-                
                 window.history.replaceState({}, document.title, window.location.pathname);
-            } catch(e) { console.error("Link Error", e); }
+            } catch(e) {}
         }
         render();
     };
