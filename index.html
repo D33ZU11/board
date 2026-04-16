@@ -2,279 +2,296 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Visual Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Visual Board Link-Share</title>
     <style>
-        :root { --bg: #f1f5f9; --primary: #2563eb; --card: #ffffff; --text: #0f172a; --folder: #475569; }
+        :root {
+            --bg: #f1f5f9;
+            --primary: #2563eb;
+            --folder: #64748b;
+            --text: #1e293b;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, system-ui, sans-serif; }
-        
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
             padding: 15px;
-            display: block; /* Fixed from flex to prevent forced centering */
         }
 
-        .container { 
-            width: 100%; 
-            max-width: 800px; 
-            margin: 0 auto; 
-        }
+        .container { max-width: 800px; margin: 0 auto; }
 
-        /* Top Active Board */
-        .board-section { 
-            background: var(--card); 
-            padding: 15px; 
-            border-radius: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            margin-bottom: 20px; 
+        .routine-section {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
             border-top: 6px solid var(--primary);
         }
 
-        .grid-6 { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            margin: 15px 0;
+        .grid-6 {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); 
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        .slot { 
-            aspect-ratio: 1/1; 
-            border: 2px dashed #cbd5e1; 
-            border-radius: 15px; 
-            background: #f8fafc; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+        .slot {
+            aspect-ratio: 1 / 1;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
             justify-content: center;
-            cursor: pointer;
-            overflow: hidden;
-            text-align: center;
+            background: #fdfdfd;
         }
 
-        .slot.filled { border: 2px solid var(--primary); background: white; }
+        .slot.filled { border-style: solid; border-color: var(--primary); background: white; }
 
-        .slot img { width: 50%; height: auto; margin-bottom: 5px; }
-        .slot span { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; padding: 0 4px; }
-
-        /* Shared Buttons */
-        .btn-send { 
-            width: 100%; 
-            background: var(--primary); 
-            color: white; 
-            padding: 18px; 
-            border-radius: 15px; 
-            border: none; 
-            font-weight: bold; 
-            font-size: 1.1rem; 
-            cursor: pointer;
-            box-shadow: 0 4px 0 #1e40af;
+        .pec-card {
+            width: 100%; height: 100%; padding: 5px;
+            text-align: center; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* Navigation Folders */
-        .folder-row { 
-            display: flex; 
-            gap: 10px; 
-            overflow-x: auto; 
-            padding-bottom: 12px; 
-            scrollbar-width: none; 
-        }
+        .pec-card img { width: 35px; height: 35px; object-fit: contain; margin-bottom: 4px; }
+        .card-label { font-size: 0.6rem; font-weight: 700; color: #334155; line-height: 1.1; }
 
-        .folder-btn { 
-            background: var(--folder); 
-            color: white; 
-            padding: 12px 20px; 
-            border-radius: 12px; 
-            border: none; 
-            font-weight: bold; 
-            white-space: nowrap;
-            cursor: pointer;
-        }
-
-        .folder-btn.active { background: #000; scale: 1.05; }
-
-        /* Card Library */
-        .library-grid { 
-            background: #e2e8f0; 
-            padding: 15px; 
-            border-radius: 20px; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); 
-            gap: 12px; 
-        }
-
-        .lib-card-box { position: relative; aspect-ratio: 1/1; }
-
-        .lib-card { 
-            background: white; 
-            border-radius: 15px; 
-            height: 100%; 
+        /* Updated Buttons */
+        .btn-send {
             width: 100%;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            text-align: center;
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: 0 4px 0 #1d4ed8;
+        }
+
+        .btn-send:active { transform: translateY(2px); box-shadow: 0 2px 0 #1d4ed8; }
+
+        .category-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .folder-btn {
+            background: var(--folder);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .folder-btn.active { background: #000; }
+
+        .library-section {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 20px;
+        }
+
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 10px;
+        }
+
+        .lib-card-wrapper { position: relative; aspect-ratio: 1/1; }
+
+        .lib-card {
+            background: white;
+            border-radius: 10px;
             padding: 8px;
+            text-align: center;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .lib-card img { width: 45%; height: auto; margin-bottom: 5px; }
-        .lib-card span { font-size: 0.7rem; font-weight: 800; color: var(--text); }
-
-        .delete-icon { 
-            position: absolute; 
-            top: -5px; 
-            right: -5px; 
-            background: #ef4444; 
-            color: white; 
-            border-radius: 50%; 
-            width: 24px; 
-            height: 24px; 
-            border: 2px solid white; 
-            font-weight: bold; 
-            display: flex; 
-            align-items: center; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
-            z-index: 10;
+            align-items: center;
+        }
+
+        .lib-card img { width: 30px; height: 30px; object-fit: contain; }
+
+        .del-btn {
+            position: absolute;
+            top: -5px; right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 22px; height: 22px;
+            border: 2px solid white;
+            font-size: 14px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10;
+        }
+
+        .add-custom-btn {
+            background: #cbd5e1;
+            color: #475569;
+            font-weight: bold; font-size: 1.5rem;
+            border: 2px dashed #94a3b8;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
 
-        .add-new-btn { 
-            background: #94a3b8; 
-            border: 3px dashed #64748b; 
-            font-size: 2.5rem; 
-            color: white; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-
-        @media (min-width: 600px) { 
-            .grid-6 { grid-template-columns: repeat(6, 1fr); }
+        @media (max-width: 600px) {
+            .grid-6 { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="board-section">
-        <div id="routineDisplay" class="grid-6"></div>
-        <button class="btn-send" onclick="generateLink()">📲 SHARE TO WHATSAPP</button>
-        <p onclick="clearRoutine()" style="text-align:center; font-size:0.75rem; color:gray; text-decoration:underline; margin-top:15px; cursor:pointer;">Clear Sequence</p>
+    <div class="routine-section">
+        <h2 style="font-size: 0.9rem; margin: 0;">⏳ Visual Sequence</h2>
+        <div id="routineGrid" class="grid-6"></div>
+        
+        <button class="btn-send" onclick="sendToPartner()">🔗 Create WhatsApp Link</button>
+        <button onclick="clearRoutine()" style="background:none; border:none; color:gray; text-decoration:underline; font-size:0.7rem; margin-top:10px; width:100%;">Clear All</button>
     </div>
 
-    <div id="folderNav" class="folder-row"></div>
-    <div id="cardLibrary" class="library-grid"></div>
+    <div id="categoryNav" class="category-nav"></div>
+
+    <div class="library-section">
+        <div id="libraryGrid" class="library-grid"></div>
+    </div>
 </div>
 
 <script>
-    const INITIAL_DATA = {
-        "Essentials": [
-            { label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
-            { label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' },
-            { label: 'Toilet', img: 'https://cdn-icons-png.flaticon.com/512/3014/3014814.png' }
+    const SLOT_COUNT = 6;
+    const INITIAL_DB = {
+        "Time": [
+            { id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' },
+            { id: "t2", label: '5 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563395.png' },
+            { id: "t3", label: '35 Mins', img: 'https://cdn-icons-png.flaticon.com/512/3563/3563404.png' },
+            { id: "t4", label: 'Leave Now', img: 'https://cdn-icons-png.flaticon.com/512/10432/10432135.png' }
         ],
-        "Feelings": [
-            { label: 'I Love You', img: 'https://cdn-icons-png.flaticon.com/512/833/833472.png' },
-            { label: 'Yes', img: 'https://cdn-icons-png.flaticon.com/512/5290/5290058.png' },
-            { label: 'No', img: 'https://cdn-icons-png.flaticon.com/512/5290/5290077.png' }
+        "Social": [
+            { id: "s1", label: 'I Love You', img: 'https://cdn-icons-png.flaticon.com/512/833/833472.png' },
+            { id: "s2", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' },
+            { id: "s3", label: 'Yes', img: 'https://cdn-icons-png.flaticon.com/512/5290/5290058.png' }
+        ],
+        "Self Care": [
+            { id: "c1", label: 'Toilet', img: 'https://cdn-icons-png.flaticon.com/512/3014/3014814.png' },
+            { id: "c2", label: 'Wash Hands', img: 'https://cdn-icons-png.flaticon.com/512/2550/2550341.png' }
+        ],
+        "Food": [
+            { id: "f1", label: 'Breakfast', img: 'https://cdn-icons-png.flaticon.com/512/1046/1046784.png' },
+            { id: "f2", label: 'Drink', img: 'https://cdn-icons-png.flaticon.com/512/3100/3100555.png' }
         ]
     };
 
-    let database = JSON.parse(localStorage.getItem('my_board_v3')) || INITIAL_DATA;
-    let activeRoutine = Array(6).fill(null);
-    let activeCat = Object.keys(database)[0];
+    let database = JSON.parse(localStorage.getItem('pecs_db_final')) || INITIAL_DB;
+    let state = { routine: Array(SLOT_COUNT).fill(null), currentCategory: "Time" };
 
+    // AUTO-LOAD FROM LINK
     window.onload = () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const sharedData = urlParams.get('v');
+        const params = new URLSearchParams(window.location.search);
+        const sharedData = params.get('data');
         if (sharedData) {
             try {
-                const parsed = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
-                activeRoutine = parsed.r;
-                database = parsed.d;
-                localStorage.setItem('my_board_v3', JSON.stringify(database));
-                window.history.replaceState({}, '', window.location.pathname);
-            } catch(e) { console.error("Load Error"); }
+                const decoded = JSON.parse(decodeURIComponent(escape(atob(sharedData))));
+                state.routine = decoded.r;
+                database = decoded.db;
+                localStorage.setItem('pecs_db_final', JSON.stringify(database));
+                // Clean the URL so refreshing doesn't overwrite
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch(e) { console.error("Link load error"); }
         }
-        renderApp();
+        render();
     };
 
-    function renderApp() {
-        // Render Top Board
-        document.getElementById('routineDisplay').innerHTML = activeRoutine.map((item, i) => `
-            <div class="slot ${item ? 'filled' : ''}" onclick="removeFromRoutine(${i})">
-                ${item ? `<img src="${item.img}"><span>${item.label}</span>` : ''}
-            </div>
-        `).join('');
-
-        // Render Folder Tabs
-        document.getElementById('folderNav').innerHTML = Object.keys(database).map(c => `
-            <button class="folder-btn ${activeCat === c ? 'active' : ''}" onclick="setCategory('${c}')">${c}</button>
-        `).join('');
-
-        // Render Library
-        let libHtml = database[activeCat].map((item, idx) => `
-            <div class="lib-card-box">
-                <div class="delete-icon" onclick="deleteCard(${idx})">×</div>
-                <div class="lib-card" onclick='addToRoutine(${JSON.stringify(item)})'>
+    function render() {
+        const routineEl = document.getElementById('routineGrid');
+        routineEl.innerHTML = state.routine.map((item, i) => {
+            if (!item) return `<div class="slot"></div>`;
+            return `<div class="slot filled" onclick="removeFromSlot(${i})">
+                <div class="pec-card">
                     <img src="${item.img}">
-                    <span>${item.label}</span>
+                    <div class="card-label">${item.label}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        const navEl = document.getElementById('categoryNav');
+        navEl.innerHTML = Object.keys(database).map(cat => `
+            <button class="folder-btn ${state.currentCategory === cat ? 'active' : ''}" 
+                    onclick="setCategory('${cat}')">${cat}</button>
+        `).join('');
+
+        const libEl = document.getElementById('libraryGrid');
+        let libHtml = database[state.currentCategory].map((item, index) => `
+            <div class="lib-card-wrapper">
+                <div class="del-btn" onclick="deleteFromLibrary('${index}')">×</div>
+                <div class="lib-card" onclick='addToFirstEmptySlot(${JSON.stringify(item)})'>
+                    <img src="${item.img}">
+                    <div class="card-label" style="margin-top:5px">${item.label}</div>
                 </div>
             </div>
         `).join('');
-        libHtml += `<div class="lib-card-box add-new-btn" onclick="addNewCard()">+</div>`;
-        document.getElementById('cardLibrary').innerHTML = libHtml;
+        
+        libHtml += `<div class="add-custom-btn" onclick="addLinkCard()">+</div>`;
+        libEl.innerHTML = libHtml;
     }
 
-    function setCategory(c) { activeCat = c; renderApp(); }
+    function setCategory(cat) { state.currentCategory = cat; render(); }
     
-    function addToRoutine(item) { 
-        const emptyIndex = activeRoutine.indexOf(null);
-        if (emptyIndex !== -1) { activeRoutine[emptyIndex] = item; renderApp(); }
-    }
-
-    function removeFromRoutine(i) { activeRoutine[i] = null; renderApp(); }
-    
-    function clearRoutine() { activeRoutine = Array(6).fill(null); renderApp(); }
-
-    function deleteCard(idx) {
+    function deleteFromLibrary(index) {
         if(confirm("Delete this card?")) {
-            database[activeCat].splice(idx, 1);
-            saveData();
-            renderApp();
+            database[state.currentCategory].splice(index, 1);
+            localStorage.setItem('pecs_db_final', JSON.stringify(database));
+            render();
         }
     }
 
-    function addNewCard() {
-        const l = prompt("Name of card:");
-        const i = prompt("Image link (URL):");
-        if(l && i) {
-            database[activeCat].push({label: l, img: i});
-            saveData();
-            renderApp();
+    function addLinkCard() {
+        const label = prompt("Card Name:");
+        const imgUrl = prompt("Paste Image Link:");
+        if (label && imgUrl) {
+            database[state.currentCategory].push({ id: "cust_" + Date.now(), label, img: imgUrl });
+            localStorage.setItem('pecs_db_final', JSON.stringify(database));
+            render();
         }
     }
 
-    function saveData() { localStorage.setItem('my_board_v3', JSON.stringify(database)); }
+    function addToFirstEmptySlot(card) {
+        const idx = state.routine.findIndex(s => s === null);
+        if (idx !== -1) { state.routine[idx] = card; render(); }
+    }
+    function removeFromSlot(index) { state.routine[index] = null; render(); }
+    function clearRoutine() { state.routine = Array(SLOT_COUNT).fill(null); render(); }
 
-    function generateLink() {
-        const payload = btoa(unescape(encodeURIComponent(JSON.stringify({ r: activeRoutine, d: database }))));
-        const finalUrl = window.location.href.split('?')[0] + "?v=" + payload;
-        const dummy = document.createElement("textarea");
-        document.body.appendChild(dummy);
-        dummy.value = finalUrl;
-        dummy.select();
+    function sendToPartner() {
+        const data = JSON.stringify({ r: state.routine, db: database });
+        const encoded = btoa(unescape(encodeURIComponent(data)));
+        const shareUrl = window.location.href.split('?')[0] + "?data=" + encoded;
+        
+        const el = document.createElement("textarea");
+        el.value = shareUrl;
+        document.body.appendChild(el);
+        el.select();
         document.execCommand("copy");
-        document.body.removeChild(dummy);
-        alert("✅ Link copied to clipboard! Paste it into WhatsApp.");
+        document.body.removeChild(el);
+        alert("WhatsApp link copied! Just paste and send it to her.");
     }
 </script>
-
 </body>
 </html>
