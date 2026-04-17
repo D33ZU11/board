@@ -20,7 +20,7 @@
         .card-label { font-size: 0.7rem; font-weight: 800; line-height: 1; margin-bottom: 2px; }
         .btn-send { width: 100%; background: var(--primary); color: white; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 0 #1d4ed8; }
         
-        /* THE NAVIGATION BARS */
+        /* NAVIGATION BARS */
         .category-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
         .nav-row { display: flex; align-items: center; gap: 10px; }
         .category-nav, .sub-nav { display: flex; gap: 8px; overflow-x: auto; flex-grow: 1; padding-bottom: 5px; }
@@ -63,14 +63,12 @@
         </div>
         <div class="nav-row">
             <div id="subNav" class="sub-nav"></div>
-            <button class="add-folder-btn" style="background:var(--primary); font-size: 1rem;" onclick="addNewSubCategory()">+ Sub</button>
         </div>
     </div>
 
     <div class="library-section">
         <div class="library-header">
             <span id="currentCatLabel" style="font-weight: bold; font-size: 0.9rem; color: #475569;">Select a Category</span>
-            <button id="delFolderBtn" class="btn-del-folder" onclick="deleteCurrentSubCategory()">Delete Sub-Folder</button>
         </div>
         <div id="libraryGrid" class="library-grid"></div>
     </div>
@@ -78,7 +76,7 @@
 
 <script>
     // ************************************************************
-    // DATA STRUCTURE UPDATED FOR SUB-FOLDERS
+    // PERMANENT LIBRARY: Edit your sub-folders HERE
     // ************************************************************
     const PERMANENT_LIBRARY = {
         "Private": {
@@ -120,7 +118,6 @@
     }
 
     function render() {
-        // Render Routine Grid
         const routineEl = document.getElementById('routineGrid');
         routineEl.innerHTML = state.routine.map((item, i) => {
             if (!item) return `<div class="slot"></div>`;
@@ -132,7 +129,6 @@
                 </div></div>`;
         }).join('');
 
-        // Render Main Category Nav
         const categories = Object.keys(database);
         document.getElementById('categoryNav').innerHTML = categories.map(cat => {
             const isLock = cat.toLowerCase().includes("private");
@@ -140,13 +136,11 @@
                     onclick="setCategory('${cat}')">${cat}</button>`;
         }).join('');
 
-        // Render Sub-Category Nav
         const subs = Object.keys(database[state.currentCat] || {});
         document.getElementById('subNav').innerHTML = subs.map(s => `
             <button class="sub-btn ${state.currentSub === s ? 'active' : ''}" onclick="setSubCategory('${s}')">${s}</button>
         `).join('');
 
-        // Render Library Grid
         const libEl = document.getElementById('libraryGrid');
         const currentCatLabel = document.getElementById('currentCatLabel');
         
@@ -182,19 +176,6 @@
     function addNewCategory() {
         const name = prompt("New Main Folder Name:");
         if (name) { database[name] = { "Main": [] }; state.currentCat = name; state.currentSub = "Main"; saveDb(); render(); }
-    }
-
-    function addNewSubCategory() {
-        const name = prompt("New Sub-Folder Name for " + state.currentCat + ":");
-        if (name) { database[state.currentCat][name] = []; state.currentSub = name; saveDb(); render(); }
-    }
-
-    function deleteCurrentSubCategory() {
-        if (confirm("Delete this sub-folder?")) {
-            delete database[state.currentCat][state.currentSub];
-            state.currentSub = Object.keys(database[state.currentCat])[0] || "Main";
-            saveDb(); render();
-        }
     }
 
     function addCard() {
