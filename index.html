@@ -13,34 +13,36 @@
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Routine Section */
         .routine-section { background: #1e293b; padding: 20px; border-radius: 20px; margin-bottom: 20px; border-top: 6px solid var(--primary); box-shadow: 0 0 20px rgba(255, 0, 122, 0.3); }
         .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 10px; }
+        
+        /* Fixed Slot Sizing */
         .slot { aspect-ratio: 1 / 1; border: 2px dashed #4a5568; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #2d3748; overflow: hidden; position: relative; }
         .slot.filled { border: 3px solid var(--primary); background: var(--card-bg); }
         
-        /* Navigation & Sub-Navigation */
         .category-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        .category-nav, .sub-nav { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
-        .category-nav::-webkit-scrollbar, .sub-nav::-webkit-scrollbar { display: none; }
+        .nav-wrapper { display: flex; align-items: center; gap: 10px; }
+        .category-nav, .sub-nav { display: flex; gap: 8px; overflow-x: auto; flex-grow: 1; padding-bottom: 5px; scrollbar-width: none; }
         
-        .folder-btn { background: #334155; color: white; padding: 12px 20px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 4px solid rgba(0,0,0,0.3); }
+        .folder-btn { background: #334155; color: white; padding: 10px 18px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 4px solid rgba(0,0,0,0.3); }
         .folder-btn.active { background: var(--folder) !important; color: #000; border-bottom: none; transform: translateY(2px); }
-        .folder-btn.is-locked-tab { background: var(--locked); }
         .folder-btn.is-locked-tab::after { content: ' 🔒'; font-size: 0.7rem; }
-        
-        .sub-btn { background: #475569; color: white; padding: 8px 15px; border-radius: 20px; border: 1px solid #64748b; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
-        .sub-btn.active { background: var(--success); color: #000; border-color: var(--success); }
 
-        /* Library Section */
+        .sub-btn { background: #475569; color: white; padding: 6px 14px; border-radius: 15px; border: none; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+        .sub-btn.active { background: var(--success); color: #000; }
+
+        /* Library Grid - Fixed Image Visibility */
         .library-section { background: #0f172a; padding: 15px; border-radius: 20px; border: 2px solid #334155; }
-        .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
-        .lib-card { background: var(--card-bg); border-radius: 15px; padding: 10px; text-align: center; cursor: pointer; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; box-shadow: 4px 4px 0px var(--folder); color: #000; }
-        .lib-card img { width: 80%; height: 60px; object-fit: contain; }
-        .card-label { font-size: 0.7rem; font-weight: 800; color: #000; margin-top: 5px; }
+        .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
         
+        .lib-card { background: var(--card-bg); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; box-shadow: 4px 4px 0px var(--folder); }
+        .lib-card img, .pec-card img { width: 100%; height: 70%; object-fit: contain; } /* This ensures images aren't giant/stretched */
+        
+        .card-label { font-size: 0.7rem; font-weight: 800; color: #000; line-height: 1.1; margin-top: 4px; }
+        .add-btn { background: var(--success); color: white; border-radius: 12px; border: none; width: 42px; height: 42px; font-size: 1.5rem; cursor: pointer; }
         .btn-send { width: 100%; background: linear-gradient(45deg, var(--primary), #8a2be2); color: white; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 0 #6d0043; }
-        .is-blurred { filter: blur(8px); opacity: 0.6; }
+        .is-blurred { filter: blur(10px); opacity: 0.5; }
+
         @media (max-width: 600px) { .grid-6 { grid-template-columns: repeat(3, 1fr); } }
     </style>
 </head>
@@ -48,14 +50,20 @@
 
 <div class="container">
     <div class="routine-section">
-        <h2 style="font-size: 0.9rem; margin: 0; color: #94a3b8;">⏳ Visual Sequence</h2>
+        <h2 style="font-size: 0.8rem; color: #94a3b8; margin: 0 0 10px 0;">⏳ VISUAL SEQUENCE</h2>
         <div id="routineGrid" class="grid-6"></div>
-        <button class="btn-send" onclick="sendToPartner()">🔗 Create WhatsApp Link</button>
+        <button class="btn-send" onclick="sendToPartner()">🔗 CREATE WHATSAPP LINK</button>
     </div>
 
     <div class="category-container">
-        <div id="categoryNav" class="category-nav"></div>
-        <div id="subNav" class="sub-nav"></div>
+        <div class="nav-wrapper">
+            <div id="categoryNav" class="category-nav"></div>
+            <button class="add-btn" onclick="addMainFolder()">+</button>
+        </div>
+        <div class="nav-wrapper">
+            <div id="subNav" class="sub-nav"></div>
+            <button class="add-btn" style="background:var(--folder); font-size: 1rem;" onclick="addSubFolder()">+ Sub</button>
+        </div>
     </div>
 
     <div class="library-section">
@@ -64,101 +72,79 @@
 </div>
 
 <script>
-    // ************************************************************
-    // YOUR NEW NESTED STRUCTURE
-    // ************************************************************
-    const PERMANENT_LIBRARY = {
-        "Private": {
-            "Main": [{ id: "p1", label: 'Secret', img: 'https://imglink.cc/cdn/tfrJszlzWu.jpg', p: true }],
-            "Love": [{ id: "l1", label: 'love u', img: 'https://imglink.cc/cdn/tfrJszlzWu.jpg', p: true }]
-        },
-        "Time": {
-            "Main": [{ id: "t1", label: 'Wait', img: 'https://cdn-icons-png.flaticon.com/512/2997/2997985.png' }],
-            "Emergency": [{ id: "e1", label: 'HELP NOW', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' }]
-        },
-        "Social": {
-            "Main": [{ id: "s1", label: 'Help', img: 'https://cdn-icons-png.flaticon.com/512/1182/1182740.png' }]
-        }
+    const PERMANENT = {
+        "Private": { "Main": [{id:"p1", label:"Secret", img:"https://imglink.cc/cdn/tfrJszlzWu.jpg", p:true}], "Love": [{id:"l1", label:"Love U", img:"https://imglink.cc/cdn/tfrJszlzWu.jpg", p:true}] },
+        "Time": { "Main": [{id:"t1", label:"Wait", img:"https://cdn-icons-png.flaticon.com/512/2997/2997985.png"}], "Emergency": [{id:"e1", label:"HELP", img:"https://cdn-icons-png.flaticon.com/512/1182/1182740.png"}] }
     };
 
-    const PASSCODE = "6969";
-    const SLOT_COUNT = 6;
-    let state = { 
-        routine: Array(SLOT_COUNT).fill(null), 
-        currentCat: "Time", 
-        currentSub: "Main",
-        unlocked: false 
-    };
+    let db = JSON.parse(localStorage.getItem('pecs_v5_pro')) || PERMANENT;
+    let state = { routine: Array(6).fill(null), cat: "Time", sub: "Main", unlocked: false };
 
-    function isLocked(name) {
-        return (name.toLowerCase().includes("private")) && !state.unlocked;
-    }
-
-    function checkPass() {
-        if (state.unlocked) return true;
-        const entry = prompt("Enter Passcode:");
-        if (entry === PASSCODE) { state.unlocked = true; render(); return true; }
-        return false;
-    }
+    function save() { localStorage.setItem('pecs_v5_pro', JSON.stringify(db)); }
 
     function render() {
-        // Render Routine
+        // Routine Slots
         document.getElementById('routineGrid').innerHTML = state.routine.map((item, i) => {
-            if (!item) return `<div class="slot"></div>`;
-            const blurred = item.p && !state.unlocked;
+            if(!item) return `<div class="slot"></div>`;
+            const isBlur = item.p && !state.unlocked;
             return `<div class="slot filled" onclick="removeFromSlot(${i})">
-                <div class="pec-card ${blurred ? 'is-blurred' : ''}">
-                    <img src="${item.img}"><div class="card-label">${item.label}</div>
-                </div></div>`;
+                <div class="pec-card ${isBlur ? 'is-blurred' : ''}"><img src="${item.img}"><div class="card-label">${item.label}</div></div>
+            </div>`;
         }).join('');
 
-        // Render Main Navigation
-        const categories = Object.keys(PERMANENT_LIBRARY);
-        document.getElementById('categoryNav').innerHTML = categories.map(cat => `
-            <button class="folder-btn ${state.currentCat === cat ? 'active' : ''} ${cat === 'Private' ? 'is-locked-tab' : ''}" 
-            onclick="setCategory('${cat}')">${cat}</button>
+        // Main Nav
+        document.getElementById('categoryNav').innerHTML = Object.keys(db).map(c => `
+            <button class="folder-btn ${state.cat === c ? 'active' : ''} ${c.toLowerCase().includes('private') ? 'is-locked-tab' : ''}" onclick="setCat('${c}')">${c}</button>
         `).join('');
 
-        // Render Sub Navigation
-        const subs = Object.keys(PERMANENT_LIBRARY[state.currentCat] || {});
-        const subNav = document.getElementById('subNav');
-        if (subs.length > 1) {
-            subNav.innerHTML = subs.map(s => `
-                <button class="sub-btn ${state.currentSub === s ? 'active' : ''}" onclick="setSub('${s}')">${s}</button>
-            `).join('');
-        } else { subNav.innerHTML = ""; }
+        // Sub Nav
+        const subs = Object.keys(db[state.cat] || {});
+        document.getElementById('subNav').innerHTML = subs.map(s => `
+            <button class="sub-btn ${state.sub === s ? 'active' : ''}" onclick="setSub('${s}')">${s}</button>
+        `).join('');
 
-        // Render Cards
-        const libGrid = document.getElementById('libraryGrid');
-        if (isLocked(state.currentCat)) {
-            libGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:40px; color:var(--locked);" onclick="checkPass()">🔒 Tap to unlock ${state.currentCat}</div>`;
+        // Cards
+        const grid = document.getElementById('libraryGrid');
+        if(state.cat.toLowerCase().includes('private') && !state.unlocked) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px;" onclick="unlock()">🔒 Tap to Unlock</div>`;
         } else {
-            const cards = PERMANENT_LIBRARY[state.currentCat][state.currentSub] || [];
-            libGrid.innerHTML = cards.map(item => `
+            let html = (db[state.cat][state.sub] || []).map(item => `
                 <div class="lib-card" onclick='addToSlot(${JSON.stringify(item)})'>
                     <img src="${item.img}"><div class="card-label">${item.label}</div>
-                </div>
-            `).join('');
+                </div>`).join('');
+            html += `<div class="lib-card" style="background:#334155; border:2px dashed #4a5568;" onclick="addCard()">
+                <span style="font-size:2rem; color:var(--success)">+</span><div class="card-label" style="color:white">Add Card</div>
+            </div>`;
+            grid.innerHTML = html;
         }
     }
 
-    function setCategory(cat) { 
-        if (cat === "Private" && !state.unlocked) { if (!checkPass()) return; }
-        state.currentCat = cat; 
-        state.currentSub = "Main"; 
-        render(); 
-    }
-    function setSub(sub) { state.currentSub = sub; render(); }
-    function addToSlot(card) {
-        const idx = state.routine.findIndex(s => s === null);
-        if (idx !== -1) { state.routine[idx] = card; render(); }
-    }
+    function setCat(c) { state.cat = c; state.sub = Object.keys(db[c])[0]; render(); }
+    function setSub(s) { state.sub = s; render(); }
+    function unlock() { if(prompt("Passcode:") === "6969") { state.unlocked = true; render(); } }
+    function addToSlot(item) { const i = state.routine.indexOf(null); if(i !== -1) { state.routine[i] = item; render(); } }
     function removeFromSlot(i) { state.routine[i] = null; render(); }
-    
+
+    function addMainFolder() {
+        const n = prompt("New Folder Name:");
+        if(n) { db[n] = { "Main": [] }; state.cat = n; state.sub = "Main"; save(); render(); }
+    }
+    function addSubFolder() {
+        const n = prompt("New Sub-Folder Name:");
+        if(n) { db[state.cat][n] = []; state.sub = n; save(); render(); }
+    }
+    function addCard() {
+        const l = prompt("Label:");
+        const i = prompt("Image URL:");
+        if(l && i) {
+            db[state.cat][state.sub].push({ id: Date.now(), label: l, img: i, p: state.cat.toLowerCase().includes('private') });
+            save(); render();
+        }
+    }
     function sendToPartner() {
-        const data = JSON.stringify(state.routine);
-        const shareUrl = window.location.href.split('?')[0] + "?data=" + btoa(data);
-        alert("Link ready! (Logic simplified for this version)");
+        const link = window.location.href.split('?')[0] + "?data=" + btoa(JSON.stringify(state.routine));
+        navigator.clipboard.writeText(link);
+        alert("Link Copied!");
     }
 
     window.onload = render;
